@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1117">
+<title>SELAK — Pustaka Komik</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ====== TETAPAN ====== */
+  /* Nota: URL Web App ditetapkan dalam pemboleh ubah API_URL di skrip bawah. */
+
+  :root{
+    --ink:#0f1117;          /* dakwat latar utama */
+    --ink-deep:#08090d;     /* lebih gelap */
+    --panel:#191c26;        /* permukaan kad */
+    --panel-2:#212533;
+    --line:#2c3040;
+    --red:#ff3b3b;          /* aksen aksi komik */
+    --red-deep:#d31f1f;
+    --yellow:#ffcc33;       /* serlahan tenaga komik */
+    --cream:#f4ecd8;        /* kotak kapsyen */
+    --ink-text:#12131a;
+    --muted:#8b93a7;
+    --text:#eef1f8;
+    --radius:14px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+    background:var(--ink);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  /* tekstur halftone komik yang halus */
+  body::before{
+    content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.05;
+    background-image:radial-gradient(var(--cream) 1px, transparent 1.4px);
+    background-size:14px 14px;
+  }
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  img{display:block}
+  ::selection{background:var(--yellow);color:var(--ink-text)}
+
+  /* ============ HEADER PUSTAKA ============ */
+  .top{
+    position:sticky;top:0;z-index:30;
+    background:linear-gradient(180deg,var(--ink-deep),rgba(8,9,13,.92));
+    border-bottom:3px solid var(--red);
+    backdrop-filter:blur(8px);
+  }
+  .top-inner{
+    max-width:1180px;margin:0 auto;
+    padding:14px 20px calc(14px + env(safe-area-inset-bottom,0)) 20px;
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    padding-top:calc(14px + env(safe-area-inset-top,0));
+  }
+  .brand{display:flex;align-items:center;gap:12px;user-select:none}
+  .logo-mark{
+    width:42px;height:42px;border-radius:10px;flex:none;
+    background:var(--yellow);position:relative;
+    box-shadow:3px 3px 0 var(--ink-deep);
+    display:grid;place-items:center;transform:rotate(-3deg);
+  }
+  .logo-mark::after{content:"";position:absolute;inset:6px;border:2.5px solid var(--ink-text);border-radius:6px}
+  .logo-mark span{font-family:'Bangers';font-size:24px;color:var(--ink-text);line-height:1;position:relative;z-index:1;letter-spacing:1px}
+  .wordmark{font-family:'Bangers';font-size:34px;letter-spacing:2px;line-height:.9;
+    color:var(--cream);text-shadow:2px 2px 0 var(--red)}
+  .tagline{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:2px}
+  .top-spacer{flex:1}
+  .search{
+    position:relative;min-width:200px;flex:1;max-width:340px;
+  }
+  .search input{
+    width:100%;padding:11px 14px 11px 40px;border-radius:11px;
+    background:var(--panel);border:1.5px solid var(--line);color:var(--text);
+    font-size:14px;font-weight:500;outline:none;transition:border-color .15s;
+  }
+  .search input:focus{border-color:var(--yellow)}
+  .search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:16px;height:16px;stroke:var(--muted)}
+
+  /* ============ GRID PUSTAKA ============ */
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px;position:relative;z-index:1}
+  .lib-head{display:flex;align-items:baseline;gap:12px;margin-bottom:20px}
+  .lib-head h1{font-size:15px;font-weight:800;letter-spacing:.3px}
+  .lib-head .count{font-size:13px;color:var(--muted);font-weight:600}
+
+  .grid{
+    display:grid;gap:22px 18px;
+    grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  }
+  .card{
+    background:none;text-align:left;display:flex;flex-direction:column;
+    transition:transform .18s ease;
+  }
+  .card:hover{transform:translateY(-5px)}
+  .card:focus-visible{outline:3px solid var(--yellow);outline-offset:4px;border-radius:6px}
+  .cover{
+    position:relative;aspect-ratio:2/3;border-radius:6px;overflow:hidden;
+    background:var(--panel-2);
+    border:2.5px solid var(--ink-deep);
+    box-shadow:5px 5px 0 var(--ink-deep), 0 6px 20px rgba(0,0,0,.4);
+  }
+  .cover img{width:100%;height:100%;object-fit:cover}
+  .cover .ph{
+    position:absolute;inset:0;display:grid;place-items:center;
+    font-family:'Bangers';font-size:34px;color:var(--line);letter-spacing:2px;
+  }
+  .cover .pill{
+    position:absolute;top:8px;right:8px;background:var(--ink-deep);color:var(--cream);
+    font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;
+    display:flex;align-items:center;gap:4px;
+  }
+  .cover .resume-bar{
+    position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(0,0,0,.5);
+  }
+  .cover .resume-bar i{display:block;height:100%;background:var(--yellow)}
+  .cap{
+    background:var(--cream);color:var(--ink-text);
+    margin-top:-2px;padding:8px 10px;border-radius:0 0 6px 6px;
+    border:2.5px solid var(--ink-deep);border-top:none;
+    box-shadow:5px 5px 0 var(--ink-deep);
+  }
+  .cap .title{font-weight:800;font-size:13.5px;line-height:1.25;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:34px}
+
+  /* ============ KEADAAN KOSONG / MUAT ============ */
+  .state{text-align:center;padding:70px 20px;color:var(--muted)}
+  .state .big{font-family:'Bangers';font-size:52px;color:var(--line);letter-spacing:3px;margin-bottom:6px}
+  .state p{font-size:14px;max-width:420px;margin:8px auto 0;line-height:1.6}
+  .state .hint{margin-top:18px;font-size:12.5px;color:var(--muted);background:var(--panel);
+    display:inline-block;padding:10px 16px;border-radius:10px;border:1px solid var(--line);text-align:left}
+  .state code{color:var(--yellow);font-family:ui-monospace,monospace;font-size:12px}
+  .spinner{
+    width:34px;height:34px;border-radius:50%;margin:0 auto 16px;
+    border:3.5px solid var(--line);border-top-color:var(--yellow);animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ============ PEMBACA ============ */
+  .reader{
+    position:fixed;inset:0;z-index:50;background:var(--ink-deep);
+    display:none;flex-direction:column;
+  }
+  .reader.open{display:flex}
+  .r-bar{
+    position:absolute;left:0;right:0;top:0;z-index:10;
+    background:linear-gradient(180deg,rgba(8,9,13,.96),rgba(8,9,13,0));
+    padding:calc(10px + env(safe-area-inset-top,0)) 14px 24px;
+    display:flex;align-items:center;gap:10px;
+    transition:transform .28s ease,opacity .28s ease;
+  }
+  .r-bar.hide{transform:translateY(-100%);opacity:0}
+  .r-btn{
+    height:40px;min-width:40px;padding:0 12px;border-radius:11px;
+    background:var(--panel);border:1.5px solid var(--line);
+    display:inline-flex;align-items:center;justify-content:center;gap:7px;
+    font-size:13px;font-weight:700;transition:background .15s,border-color .15s;
+  }
+  .r-btn:hover{background:var(--panel-2)}
+  .r-btn:active{transform:scale(.96)}
+  .r-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2}
+  .r-btn.icon{padding:0;width:40px}
+  .r-title{flex:1;min-width:0;font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .r-count{
+    background:var(--ink-deep);border:1.5px solid var(--line);color:var(--cream);
+    font-weight:800;font-size:13px;padding:8px 12px;border-radius:11px;white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+  /* suis mod */
+  .mode{display:inline-flex;background:var(--panel);border:1.5px solid var(--line);border-radius:11px;overflow:hidden}
+  .mode button{padding:0 12px;height:40px;font-size:12.5px;font-weight:800;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .mode button svg{width:16px;height:16px}
+  .mode button.on{background:var(--red);color:#fff}
+
+  /* kawasan baca */
+  .stage{flex:1;overflow:auto;position:relative;-webkit-overflow-scrolling:touch}
+  .stage::-webkit-scrollbar{width:8px}
+  .stage::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+
+  /* mod selak: satu muka */
+  .page-view{min-height:100%;display:flex;align-items:center;justify-content:center;padding:0}
+  .page-view img{max-width:100%}
+  .page-view.fit-h img{max-height:100vh;width:auto;max-width:none}
+  .page-view.fit-w img{width:100%;max-width:900px}
+  /* zon ketik kiri/kanan */
+  .tap-zones{position:absolute;inset:0;display:flex;z-index:5}
+  .tap-zones div{flex:1}
+  .tap-zones .mid{flex:1.1}
+
+  /* mod skrol: webtoon */
+  .scroll-view{max-width:900px;margin:0 auto}
+  .scroll-view img{width:100%;background:var(--panel);min-height:120px}
+
+  .r-loading{position:absolute;inset:0;display:grid;place-items:center;background:var(--ink-deep);z-index:8}
+
+  .hidden{display:none!important}
+
+  @media (max-width:640px){
+    .wordmark{font-size:28px}
+    .tagline{display:none}
+    .search{order:3;max-width:none;flex-basis:100%}
+    .r-title{font-size:13px}
+    .mode button span{display:none}
+    .mode button{padding:0 11px}
+    .grid{gap:18px 14px;grid-template-columns:repeat(auto-fill,minmax(128px,1fr))}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<!-- ============ PUSTAKA ============ -->
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <div class="logo-mark"><span>S</span></div>
+      <div>
+        <div class="wordmark">SELAK</div>
+        <div class="tagline">Pustaka Komik</div>
+      </div>
+    </div>
+    <div class="top-spacer"></div>
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="search" type="search" placeholder="Cari tajuk komik…" autocomplete="off">
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="lib-head hidden" id="libHead">
+    <h1>Koleksi</h1>
+    <span class="count" id="libCount"></span>
+  </div>
+  <div id="library"></div>
+</main>
+
+<!-- ============ PEMBACA ============ -->
+<section class="reader" id="reader" aria-hidden="true">
+  <div class="r-bar" id="rBar">
+    <button class="r-btn icon" id="btnBack" title="Kembali ke pustaka" aria-label="Kembali">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="r-title" id="rTitle"></div>
+    <div class="mode" id="modeSwitch">
+      <button data-mode="page" class="on" title="Mod selak (satu muka)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg><span>Selak</span>
+      </button>
+      <button data-mode="scroll" title="Mod skrol (webtoon)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="3" width="12" height="18" rx="2"/><line x1="6" y1="9" x2="18" y2="9"/><line x1="6" y1="15" x2="18" y2="15"/></svg><span>Skrol</span>
+      </button>
+    </div>
+    <button class="r-btn icon" id="btnFit" title="Tukar muat (lebar/tinggi)" aria-label="Muat">
+      <svg viewBox="0 0 24 24" id="fitIcon"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+    </button>
+    <div class="r-count" id="rCount">—</div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="r-loading" id="rLoading"><div class="spinner"></div></div>
+    <!-- mod selak -->
+    <div class="page-view fit-w" id="pageView">
+      <img id="pageImg" alt="Muka surat komik">
+      <div class="tap-zones" id="tapZones">
+        <div data-tap="prev" title="Muka sebelum"></div>
+        <div class="mid" data-tap="bar" title="Papar/sembunyi kawalan"></div>
+        <div data-tap="next" title="Muka seterusnya"></div>
+      </div>
+    </div>
+    <!-- mod skrol -->
+    <div class="scroll-view hidden" id="scrollView"></div>
+  </div>
+</section>
+
+<script>
+/* ================= TETAPAN =================
+   Tampal URL Web App Apps Script di sini
+   (berakhir dengan /exec). */
+const API_URL = 'TAMPAL_URL_WEB_APP_DI_SINI';
+/* =========================================== */
+
+const IMG = id => `https://drive.google.com/thumbnail?id=${id}&sz=w1600`;
+const LS = k => `selak_${k}`;
+
+const el = id => document.getElementById(id);
+const state = {
+  comics: [],
+  current: null,     // { id, title, pages: [] }
+  index: 0,
+  mode: 'page',      // 'page' | 'scroll'
+  fit: 'w',          // 'w' | 'h'
+  barTimer: null,
+};
+
+/* -------- JSONP (elak CORS dengan GitHub Pages) -------- */
+function jsonp(params){
+  return new Promise((resolve,reject)=>{
+    const cb='selak_cb_'+Math.random().toString(36).slice(2);
+    const s=document.createElement('script');
+    const to=setTimeout(()=>{done();reject(new Error('Sambungan tamat masa.'));},30000);
+    function done(){clearTimeout(to);delete window[cb];s.remove();}
+    window[cb]=data=>{done();resolve(data);};
+    s.onerror=()=>{done();reject(new Error('Gagal menyambung ke pelayan.'));};
+    const qs=Object.entries(params).map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');
+    s.src=`${API_URL}?${qs}&callback=${cb}`;
+    document.body.appendChild(s);
+  });
+}
+
+/* ================= PUSTAKA ================= */
+async function loadLibrary(){
+  const lib=el('library');
+  if(!API_URL || API_URL.indexOf('TAMPAL_')===0){
+    lib.innerHTML = stateBlock('Belum bersambung',
+      'URL Web App belum ditetapkan.',
+      'Buka <code>index.html</code>, cari <code>API_URL</code> dan tampal URL <code>/exec</code> Apps Script anda.');
+    return;
+  }
+  lib.innerHTML = `<div class="state"><div class="spinner"></div><p>Membuka pustaka…</p></div>`;
+  try{
+    const res = await jsonp({action:'library'});
+    if(res.error) throw new Error(res.error);
+    state.comics = res.comics || [];
+    renderLibrary(state.comics);
+  }catch(err){
+    lib.innerHTML = stateBlock('Alamak', err.message,
+      'Semak folder induk sudah dikongsi & URL Web App betul. Pastikan anda log masuk akaun Google yang sama.');
+  }
+}
+
+function stateBlock(big,msg,hint){
+  return `<div class="state"><div class="big">${big}</div><p>${msg}</p>${hint?`<div class="hint">${hint}</div>`:''}</div>`;
+}
+
+function renderLibrary(list){
+  const lib=el('library');
+  el('libHead').classList.remove('hidden');
+  el('libCount').textContent = `${state.comics.length} komik`;
+
+  if(!list.length){
+    lib.innerHTML = stateBlock('Kosong','Tiada komik ditemui dalam folder induk.',
+      'Setiap komik = satu subfolder berisi gambar (001, 002, …).');
+    return;
+  }
+
+  const grid=document.createElement('div');
+  grid.className='grid';
+  list.forEach(c=>{
+    const saved = getProgress(c.id);
+    const pct = (saved && c.pageCount) ? Math.round(((saved+1)/c.pageCount)*100) : 0;
+    const card=document.createElement('button');
+    card.className='card';
+    card.setAttribute('aria-label',c.title);
+    card.innerHTML=`
+      <div class="cover">
+        ${c.cover ? `<img loading="lazy" src="${IMG(c.cover)}" alt="">`
+                  : `<div class="ph">?</div>`}
+        ${c.pageCount ? `<div class="pill">${c.pageCount} ms</div>` : ''}
+        ${pct>0 && pct<100 ? `<div class="resume-bar"><i style="width:${pct}%"></i></div>` : ''}
+      </div>
+      <div class="cap"><div class="title">${escapeHtml(c.title)}</div></div>`;
+    card.addEventListener('click',()=>openComic(c));
+    grid.appendChild(card);
+  });
+  lib.innerHTML='';
+  lib.appendChild(grid);
+}
+
+function escapeHtml(s){return s.replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+
+/* -------- carian -------- */
+el('search').addEventListener('input',e=>{
+  const q=e.target.value.trim().toLowerCase();
+  const filtered = state.comics.filter(c=>c.title.toLowerCase().includes(q));
+  renderLibrary(filtered);
+  if(q) el('libCount').textContent = `${filtered.length} daripada ${state.comics.length}`;
+});
+
+/* ================= PEMBACA ================= */
+async function openComic(comic){
+  state.current = { ...comic, pages:[] };
+  el('reader').classList.add('open');
+  el('reader').setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+  el('rTitle').textContent = comic.title;
+  el('rLoading').classList.remove('hidden');
+  el('pageImg').removeAttribute('src');
+  el('scrollView').innerHTML='';
+  el('rCount').textContent='—';
+
+  try{
+    const res = await jsonp({action:'pages',folderId:comic.id});
+    if(res.error) throw new Error(res.error);
+    state.current.pages = res.pages || [];
+    if(!state.current.pages.length){
+      el('rLoading').innerHTML = `<div class="state"><div class="big">Kosong</div><p>Tiada gambar dalam folder ini.</p></div>`;
+      return;
+    }
+    state.index = Math.min(getProgress(comic.id)||0, state.current.pages.length-1);
+    applyMode(state.mode, true);
+    el('rLoading').classList.add('hidden');
+  }catch(err){
+    el('rLoading').innerHTML = `<div class="state"><div class="big">Ralat</div><p>${err.message}</p></div>`;
+  }
+}
+
+function closeReader(){
+  el('reader').classList.remove('open');
+  el('reader').setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
+  if(state.current) saveProgress(state.current.id, state.index);
+  renderLibrary(currentFilter());   // segar semula bar kemajuan
+}
+function currentFilter(){
+  const q=el('search').value.trim().toLowerCase();
+  return q ? state.comics.filter(c=>c.title.toLowerCase().includes(q)) : state.comics;
+}
+
+/* -------- mod -------- */
+function applyMode(mode, initial){
+  state.mode = mode;
+  document.querySelectorAll('#modeSwitch button').forEach(b=>b.classList.toggle('on',b.dataset.mode===mode));
+  const pv=el('pageView'), sv=el('scrollView'), fitBtn=el('btnFit');
+  if(mode==='page'){
+    sv.classList.add('hidden'); pv.classList.remove('hidden'); fitBtn.classList.remove('hidden');
+    showPage(state.index);
+  }else{
+    pv.classList.add('hidden'); sv.classList.remove('hidden'); fitBtn.classList.add('hidden');
+    buildScroll();
+  }
+}
+
+/* -------- mod selak -------- */
+function showPage(i){
+  const pages=state.current.pages;
+  state.index = Math.max(0,Math.min(i,pages.length-1));
+  el('pageImg').src = IMG(pages[state.index].id);
+  el('stage').scrollTop=0;
+  updateCount();
+  saveProgress(state.current.id, state.index);
+  // pramuat muka seterusnya
+  [1,2].forEach(d=>{const n=state.index+d; if(pages[n]){const im=new Image();im.src=IMG(pages[n].id);}});
+}
+function nextPage(){ if(state.index<state.current.pages.length-1) showPage(state.index+1); }
+function prevPage(){ if(state.index>0) showPage(state.index-1); }
+
+function updateCount(){
+  el('rCount').textContent = `${state.index+1} / ${state.current.pages.length}`;
+}
+
+/* -------- mod skrol (webtoon, lazy) -------- */
+function buildScroll(){
+  const sv=el('scrollView');
+  sv.innerHTML='';
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){
+        const img=en.target;
+        if(!img.src){ img.src=img.dataset.src; }
+        // kemas kini kiraan ikut muka yang dilihat
+        const idx=+img.dataset.idx;
+        state.index=idx; updateCount(); saveProgress(state.current.id, idx);
+      }
+    });
+  },{rootMargin:'800px 0px'});
+  state.current.pages.forEach((p,i)=>{
+    const img=document.createElement('img');
+    img.dataset.src=IMG(p.id); img.dataset.idx=i; img.alt=`Muka ${i+1}`;
+    sv.appendChild(img); io.observe(img);
+  });
+  updateCount();
+  // lompat ke muka tersimpan
+  requestAnimationFrame(()=>{
+    const target=sv.children[state.index];
+    if(target) target.scrollIntoView();
+  });
+}
+
+/* -------- muat lebar/tinggi -------- */
+function toggleFit(){
+  state.fit = state.fit==='w' ? 'h' : 'w';
+  const pv=el('pageView');
+  pv.classList.toggle('fit-w', state.fit==='w');
+  pv.classList.toggle('fit-h', state.fit==='h');
+}
+
+/* -------- bar auto sembunyi -------- */
+function flashBar(){
+  const bar=el('rBar');
+  bar.classList.remove('hide');
+  clearTimeout(state.barTimer);
+  state.barTimer=setTimeout(()=>bar.classList.add('hide'),2600);
+}
+function toggleBar(){
+  const bar=el('rBar');
+  if(bar.classList.contains('hide')) flashBar();
+  else { bar.classList.add('hide'); clearTimeout(state.barTimer); }
+}
+
+/* -------- kemajuan (localStorage) -------- */
+function saveProgress(id,i){ try{localStorage.setItem(LS('p_'+id), i);}catch(e){} }
+function getProgress(id){ try{const v=localStorage.getItem(LS('p_'+id)); return v===null?0:+v;}catch(e){return 0;} }
+
+/* ================= EVENTS ================= */
+el('btnBack').addEventListener('click',closeReader);
+el('btnFit').addEventListener('click',toggleFit);
+el('modeSwitch').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(b) applyMode(b.dataset.mode);
+});
+el('tapZones').addEventListener('click',e=>{
+  const t=e.target.dataset.tap;
+  if(t==='next'){nextPage();flashBar();}
+  else if(t==='prev'){prevPage();flashBar();}
+  else toggleBar();
+});
+
+// papan kekunci
+document.addEventListener('keydown',e=>{
+  if(!el('reader').classList.contains('open')) return;
+  if(e.key==='Escape') closeReader();
+  if(state.mode!=='page') return;
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){e.preventDefault();nextPage();flashBar();}
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();prevPage();flashBar();}
+});
+
+// leret jari (mod selak)
+let tsX=0,tsY=0;
+el('stage').addEventListener('touchstart',e=>{tsX=e.touches[0].clientX;tsY=e.touches[0].clientY;},{passive:true});
+el('stage').addEventListener('touchend',e=>{
+  if(state.mode!=='page')return;
+  const dx=e.changedTouches[0].clientX-tsX, dy=e.changedTouches[0].clientY-tsY;
+  if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)){
+    if(dx<0) nextPage(); else prevPage();
+    flashBar();
+  }
+},{passive:true});
+
+// papar bar bila gerak tetikus di pembaca
+el('reader').addEventListener('mousemove',()=>{ if(el('reader').classList.contains('open')) flashBar(); });
+
+/* ================= MULA ================= */
+loadLibrary();
+</script>
+</body>
+</html>
