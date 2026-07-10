@@ -116,6 +116,11 @@
     font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;
     display:flex;align-items:center;gap:4px;
   }
+  .cover .tag-pdf{
+    position:absolute;top:8px;left:8px;background:var(--red);color:#fff;
+    font-size:10.5px;font-weight:800;letter-spacing:.6px;padding:3px 7px;border-radius:6px;
+    box-shadow:2px 2px 0 var(--ink-deep);
+  }
   .cover .resume-bar{
     position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(0,0,0,.5);
   }
@@ -197,6 +202,56 @@
   .scroll-view{max-width:900px;margin:0 auto}
   .scroll-view img{width:100%;background:var(--panel);min-height:120px}
 
+  /* mod PDF: pemapar Drive terbenam */
+  .pdf-view{width:100%;height:100%;border:none;background:var(--ink-deep);display:block}
+
+  /* penunjuk episod dalam bar pembaca */
+  .ep-ind{background:var(--yellow)!important;color:var(--ink-text)!important;border-color:var(--yellow)!important;font-weight:800}
+
+  /* ====== SKRIN SENARAI EPISOD ====== */
+  .epscreen{
+    position:fixed;inset:0;z-index:45;background:var(--ink);
+    display:none;flex-direction:column;
+  }
+  .epscreen.open{display:flex}
+  .ep-bar{
+    display:flex;align-items:center;gap:10px;
+    padding:calc(12px + env(safe-area-inset-top,0)) 16px 12px;
+    background:linear-gradient(180deg,var(--ink-deep),rgba(8,9,13,.92));
+    border-bottom:3px solid var(--red);
+  }
+  .ep-list{
+    flex:1;overflow:auto;padding:16px;max-width:760px;width:100%;margin:0 auto;
+  }
+  .ep-row{
+    display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+    background:var(--panel);border:1.5px solid var(--line);border-radius:12px;
+    padding:12px 14px;margin-bottom:10px;transition:transform .12s,border-color .12s,background .12s;
+  }
+  .ep-row:hover{transform:translateX(4px);border-color:var(--yellow);background:var(--panel-2)}
+  .ep-row:active{transform:scale(.99)}
+  .ep-num{
+    width:42px;height:42px;flex:none;border-radius:10px;display:grid;place-items:center;
+    background:var(--ink-deep);border:1.5px solid var(--line);
+    font-family:'Bangers';font-size:20px;letter-spacing:1px;color:var(--yellow);
+  }
+  .ep-row.read .ep-num{background:var(--red);border-color:var(--red);color:#fff}
+  .ep-meta{flex:1;min-width:0}
+  .ep-meta .t{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ep-meta .s{font-size:12px;color:var(--muted);font-weight:600;margin-top:2px;display:flex;align-items:center;gap:8px}
+  .ep-kind{font-size:10px;font-weight:800;letter-spacing:.5px;padding:2px 6px;border-radius:5px;background:var(--red);color:#fff}
+  .ep-kind.img{background:var(--panel-2);color:var(--muted)}
+  .ep-chev{flex:none;width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:2.4}
+  .ep-prog{flex:none;font-size:11px;font-weight:800;color:var(--yellow)}
+
+  /* butang "episod seterusnya" di hujung skrol */
+  .next-ep-btn{
+    display:block;width:100%;max-width:420px;margin:24px auto 60px;padding:16px;
+    background:var(--red);color:#fff;border-radius:12px;font-weight:800;font-size:15px;
+    box-shadow:4px 4px 0 var(--ink-deep);
+  }
+  .next-ep-btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink-deep)}
+
   .r-loading{position:absolute;inset:0;display:grid;place-items:center;background:var(--ink-deep);z-index:8}
 
   .hidden{display:none!important}
@@ -248,6 +303,7 @@
       <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
     <div class="r-title" id="rTitle"></div>
+    <button class="r-btn ep-ind hidden" id="epInd" title="Senarai episod">Ep 1/1</button>
     <div class="mode" id="modeSwitch">
       <button data-mode="page" class="on" title="Mod selak (satu muka)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg><span>Selak</span>
@@ -275,14 +331,28 @@
     </div>
     <!-- mod skrol -->
     <div class="scroll-view hidden" id="scrollView"></div>
+    <!-- mod PDF -->
+    <iframe class="pdf-view hidden" id="pdfFrame" title="Komik PDF" allow="fullscreen"></iframe>
   </div>
+</section>
+
+<!-- ============ SENARAI EPISOD ============ -->
+<section class="epscreen" id="epScreen" aria-hidden="true">
+  <div class="ep-bar">
+    <button class="r-btn icon" id="epBack" title="Kembali ke pustaka" aria-label="Kembali">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="r-title" id="epTitle"></div>
+    <div class="r-count" id="epTotal">—</div>
+  </div>
+  <div class="ep-list" id="epList"></div>
 </section>
 
 <script>
 /* ================= TETAPAN =================
    Tampal URL Web App Apps Script di sini
    (berakhir dengan /exec). */
-const API_URL = 'https://script.google.com/macros/s/AKfycbxV6Ted5bCJkOA82BntymEoxHtJmkqvGigtNdtpxPGdrt4Tz8G0Jz6x9e4l_QqFz8vI/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycby36--cvh7ZFgb0shyw47uN19yQ2SbKpwKVsvVFI9Qlo_LlA7z9Kz4DpDJUs3hIvk2R/exec';
 /* =========================================== */
 
 const IMG = id => `https://drive.google.com/thumbnail?id=${id}&sz=w1600`;
@@ -296,6 +366,10 @@ const state = {
   mode: 'page',      // 'page' | 'scroll'
   fit: 'w',          // 'w' | 'h'
   barTimer: null,
+  isPdf: false,      // unit semasa jenis PDF?
+  comic: null,       // komik bersiri induk (jika ada)
+  episodes: [],      // senarai episod komik bersiri
+  epIndex: -1,       // indeks episod semasa (-1 = tiada)
 };
 
 /* -------- JSONP (elak CORS dengan GitHub Pages) -------- */
@@ -352,8 +426,10 @@ function renderLibrary(list){
   const grid=document.createElement('div');
   grid.className='grid';
   list.forEach(c=>{
+    const isPdf = c.type==='pdf';
+    const isEp  = c.type==='episodes';
     const saved = getProgress(c.id);
-    const pct = (saved && c.pageCount) ? Math.round(((saved+1)/c.pageCount)*100) : 0;
+    const pct = (c.type==='images' && saved && c.pageCount) ? Math.round(((saved+1)/c.pageCount)*100) : 0;
     const card=document.createElement('button');
     card.className='card';
     card.setAttribute('aria-label',c.title);
@@ -361,7 +437,9 @@ function renderLibrary(list){
       <div class="cover">
         ${c.cover ? `<img loading="lazy" src="${IMG(c.cover)}" alt="">`
                   : `<div class="ph">?</div>`}
-        ${c.pageCount ? `<div class="pill">${c.pageCount} ms</div>` : ''}
+        ${isPdf ? `<div class="tag-pdf">PDF</div>` : ''}
+        ${isEp  ? `<div class="tag-pdf" style="background:var(--yellow);color:var(--ink-text)">${c.pageCount||''} EP</div>` : ''}
+        ${(c.type==='images' && c.pageCount) ? `<div class="pill">${c.pageCount} ms</div>` : ''}
         ${pct>0 && pct<100 ? `<div class="resume-bar"><i style="width:${pct}%"></i></div>` : ''}
       </div>
       <div class="cap"><div class="title">${escapeHtml(c.title)}</div></div>`;
@@ -383,40 +461,178 @@ el('search').addEventListener('input',e=>{
 });
 
 /* ================= PEMBACA ================= */
-async function openComic(comic){
-  state.current = { ...comic, pages:[] };
+function enterOverlay(){ document.body.style.overflow='hidden'; }
+function exitToLibrary(){
+  el('reader').classList.remove('open');
+  el('epScreen').classList.remove('open');
+  el('reader').setAttribute('aria-hidden','true');
+  el('epScreen').setAttribute('aria-hidden','true');
+  el('pdfFrame').removeAttribute('src');
+  document.body.style.overflow='';
+  state.comic=null; state.episodes=[]; state.epIndex=-1;
+  renderLibrary(currentFilter());
+}
+
+function openReaderShell(unit){
+  state.current = { ...unit, pages:[] };
   el('reader').classList.add('open');
   el('reader').setAttribute('aria-hidden','false');
-  document.body.style.overflow='hidden';
-  el('rTitle').textContent = comic.title;
+  enterOverlay();
+  el('rTitle').textContent = unit.title;
+  updateEpIndicator();
+  // reset paparan
+  el('rLoading').innerHTML = '<div class="spinner"></div>';
   el('rLoading').classList.remove('hidden');
   el('pageImg').removeAttribute('src');
   el('scrollView').innerHTML='';
-  el('rCount').textContent='—';
+  el('pageView').classList.add('hidden');
+  el('scrollView').classList.add('hidden');
+  el('pdfFrame').classList.add('hidden');
+  el('pdfFrame').removeAttribute('src');
+}
 
+function openComic(comic){
+  state.comic=null; state.episodes=[]; state.epIndex=-1;
+  if(comic.type==='episodes') openEpisodeList(comic);
+  else if(comic.type==='pdf') openPdf(comic);
+  else openImages(comic);
+}
+
+/* -------- senarai episod (komik bersiri) -------- */
+async function openEpisodeList(comic){
+  state.comic=comic; state.episodes=[]; state.epIndex=-1;
+  enterOverlay();
+  el('epScreen').classList.add('open');
+  el('epScreen').setAttribute('aria-hidden','false');
+  el('epTitle').textContent=comic.title;
+  el('epTotal').textContent='—';
+  el('epList').innerHTML='<div class="state"><div class="spinner"></div><p>Membuka episod…</p></div>';
   try{
-    const res = await jsonp({action:'pages',folderId:comic.id});
+    const res=await jsonp({action:'episodes',folderId:comic.id});
     if(res.error) throw new Error(res.error);
-    state.current.pages = res.pages || [];
-    if(!state.current.pages.length){
-      el('rLoading').innerHTML = `<div class="state"><div class="big">Kosong</div><p>Tiada gambar dalam folder ini.</p></div>`;
+    state.episodes=res.episodes||[];
+    if(!state.episodes.length){
+      el('epList').innerHTML='<div class="state"><div class="big">Kosong</div><p>Tiada episod dalam komik ini.</p></div>';
       return;
     }
-    state.index = Math.min(getProgress(comic.id)||0, state.current.pages.length-1);
-    applyMode(state.mode, true);
-    el('rLoading').classList.add('hidden');
+    el('epTotal').textContent=`${state.episodes.length} episod`;
+    renderEpisodes();
   }catch(err){
-    el('rLoading').innerHTML = `<div class="state"><div class="big">Ralat</div><p>${err.message}</p></div>`;
+    el('epList').innerHTML=`<div class="state"><div class="big">Ralat</div><p>${err.message}</p></div>`;
   }
 }
 
-function closeReader(){
+function renderEpisodes(){
+  const list=el('epList'); list.innerHTML='';
+  state.episodes.forEach((ep,i)=>{
+    const isImg=ep.kind==='images';
+    const saved=isImg?getProgress(ep.id):0;
+    const started=isImg && saved>0;
+    const finished=isImg && ep.pageCount && saved>=ep.pageCount-1;
+    const row=document.createElement('button');
+    row.className='ep-row'+(finished?' read':'');
+    const meta=isImg?`${ep.pageCount||'?'} muka`:'Fail PDF';
+    let prog='';
+    if(finished) prog='<span class="ep-prog">✓ Habis</span>';
+    else if(started && ep.pageCount) prog=`<span class="ep-prog">${Math.round(((saved+1)/ep.pageCount)*100)}%</span>`;
+    row.innerHTML=`
+      <div class="ep-num">${i+1}</div>
+      <div class="ep-meta">
+        <div class="t">${escapeHtml(ep.title)}</div>
+        <div class="s"><span class="ep-kind ${isImg?'img':''}">${isImg?'GAMBAR':'PDF'}</span>${meta}${prog}</div>
+      </div>
+      <svg class="ep-chev" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>`;
+    row.addEventListener('click',()=>openEpisodeFromList(i));
+    list.appendChild(row);
+  });
+}
+
+function openEpisodeFromList(i){
+  el('epScreen').classList.remove('open');   // sorok senarai; overlay kekal
+  openEpisode(i,'saved');
+}
+
+function openEpisode(i, startAt){
+  const ep=state.episodes[i];
+  if(!ep) return;
+  state.epIndex=i;
+  const unit={ id:ep.id, title:state.comic.title+' — '+ep.title, type:ep.kind, pdfId:ep.pdfId };
+  if(ep.kind==='pdf') openPdf(unit);
+  else openImages(unit, startAt||'saved');
+}
+
+function updateEpIndicator(){
+  const ind=el('epInd');
+  if(state.epIndex>=0 && state.episodes.length>0){
+    ind.textContent=`Ep ${state.epIndex+1}/${state.episodes.length}`;
+    ind.classList.remove('hidden');
+  }else ind.classList.add('hidden');
+}
+function hasEp(delta){
+  return state.episodes.length>0 && state.epIndex>=0 &&
+         state.epIndex+delta>=0 && state.epIndex+delta<state.episodes.length;
+}
+
+/* -------- unit PDF -------- */
+function openPdf(unit){
+  state.isPdf=true;
+  openReaderShell(unit);
+  el('modeSwitch').classList.add('hidden');
+  el('btnFit').classList.add('hidden');
+  el('rCount').classList.add('hidden');
+  el('rBar').classList.remove('hide');
+  clearTimeout(state.barTimer);
+  const f=el('pdfFrame');
+  f.onload=()=>el('rLoading').classList.add('hidden');
+  f.src=`https://drive.google.com/file/d/${unit.pdfId}/preview`;
+  f.classList.remove('hidden');
+  setTimeout(()=>el('rLoading').classList.add('hidden'),4000);
+}
+
+/* -------- unit gambar -------- */
+async function openImages(unit, startAt){
+  state.isPdf=false;
+  openReaderShell(unit);
+  el('modeSwitch').classList.remove('hidden');
+  el('rCount').classList.remove('hidden');
+  el('rCount').textContent='—';
+  try{
+    const res=await jsonp({action:'pages',folderId:unit.id});
+    if(res.error) throw new Error(res.error);
+    state.current.pages=res.pages||[];
+    if(!state.current.pages.length){
+      el('rLoading').innerHTML=`<div class="state"><div class="big">Kosong</div><p>Tiada gambar dalam folder ini.</p></div>`;
+      return;
+    }
+    const last=state.current.pages.length-1;
+    if(startAt==='first') state.index=0;
+    else if(startAt==='last') state.index=last;
+    else state.index=Math.min(getProgress(unit.id)||0, last);
+    applyMode(state.mode, true);
+    el('rLoading').classList.add('hidden');
+  }catch(err){
+    el('rLoading').innerHTML=`<div class="state"><div class="big">Ralat</div><p>${err.message}</p></div>`;
+  }
+}
+
+/* -------- navigasi kembali -------- */
+function hideReaderOverlay(){
+  if(state.current && !state.isPdf) saveProgress(state.current.id, state.index);
   el('reader').classList.remove('open');
   el('reader').setAttribute('aria-hidden','true');
-  document.body.style.overflow='';
-  if(state.current) saveProgress(state.current.id, state.index);
-  renderLibrary(currentFilter());   // segar semula bar kemajuan
+  el('pdfFrame').removeAttribute('src');
 }
+function readerBack(){
+  hideReaderOverlay();
+  if(state.episodes.length>0){
+    renderEpisodes();
+    el('epScreen').classList.add('open');
+    el('epScreen').setAttribute('aria-hidden','false');
+  }else{
+    exitToLibrary();
+  }
+}
+function closeReader(){ hideReaderOverlay(); exitToLibrary(); }
 function currentFilter(){
   const q=el('search').value.trim().toLowerCase();
   return q ? state.comics.filter(c=>c.title.toLowerCase().includes(q)) : state.comics;
@@ -447,8 +663,16 @@ function showPage(i){
   // pramuat muka seterusnya
   [1,2].forEach(d=>{const n=state.index+d; if(pages[n]){const im=new Image();im.src=IMG(pages[n].id);}});
 }
-function nextPage(){ if(state.index<state.current.pages.length-1) showPage(state.index+1); }
-function prevPage(){ if(state.index>0) showPage(state.index-1); }
+function nextPage(){
+  if(state.index<state.current.pages.length-1){ showPage(state.index+1); return; }
+  // di muka akhir → episod seterusnya (jika ada)
+  if(hasEp(1)) openEpisode(state.epIndex+1,'first');
+}
+function prevPage(){
+  if(state.index>0){ showPage(state.index-1); return; }
+  // di muka pertama → episod sebelum (ke muka akhirnya)
+  if(hasEp(-1)) openEpisode(state.epIndex-1,'last');
+}
 
 function updateCount(){
   el('rCount').textContent = `${state.index+1} / ${state.current.pages.length}`;
@@ -474,6 +698,14 @@ function buildScroll(){
     img.dataset.src=IMG(p.id); img.dataset.idx=i; img.alt=`Muka ${i+1}`;
     sv.appendChild(img); io.observe(img);
   });
+  // butang "episod seterusnya" di hujung (komik bersiri)
+  if(hasEp(1)){
+    const btn=document.createElement('button');
+    btn.className='next-ep-btn';
+    btn.textContent='Episod seterusnya ›';
+    btn.addEventListener('click',()=>openEpisode(state.epIndex+1,'first'));
+    sv.appendChild(btn);
+  }
   updateCount();
   // lompat ke muka tersimpan
   requestAnimationFrame(()=>{
@@ -495,6 +727,7 @@ function flashBar(){
   const bar=el('rBar');
   bar.classList.remove('hide');
   clearTimeout(state.barTimer);
+  if(state.isPdf) return;   // mod PDF: bar kekal papar
   state.barTimer=setTimeout(()=>bar.classList.add('hide'),2600);
 }
 function toggleBar(){
@@ -508,7 +741,9 @@ function saveProgress(id,i){ try{localStorage.setItem(LS('p_'+id), i);}catch(e){
 function getProgress(id){ try{const v=localStorage.getItem(LS('p_'+id)); return v===null?0:+v;}catch(e){return 0;} }
 
 /* ================= EVENTS ================= */
-el('btnBack').addEventListener('click',closeReader);
+el('btnBack').addEventListener('click',readerBack);
+el('epInd').addEventListener('click',readerBack);
+el('epBack').addEventListener('click',exitToLibrary);
 el('btnFit').addEventListener('click',toggleFit);
 el('modeSwitch').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(b) applyMode(b.dataset.mode);
@@ -522,9 +757,10 @@ el('tapZones').addEventListener('click',e=>{
 
 // papan kekunci
 document.addEventListener('keydown',e=>{
+  if(el('epScreen').classList.contains('open') && e.key==='Escape'){ exitToLibrary(); return; }
   if(!el('reader').classList.contains('open')) return;
-  if(e.key==='Escape') closeReader();
-  if(state.mode!=='page') return;
+  if(e.key==='Escape') readerBack();
+  if(state.isPdf || state.mode!=='page') return;
   if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){e.preventDefault();nextPage();flashBar();}
   if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();prevPage();flashBar();}
 });
